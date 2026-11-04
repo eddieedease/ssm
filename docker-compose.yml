@@ -1,0 +1,77 @@
+name: ssm
+
+services:
+  # PHP + Apache serving the API and the web installer (http://localhost:8080)
+  app:
+    build:
+      context: docker/php
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      # Only used to prefill the installer form in development.
+      SSM_DEV_DB_HOST: db
+      SSM_DEV_DB_NAME: ssm
+      SSM_DEV_DB_USER: ssm
+      SSM_DEV_DB_PASS: ssm
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ssm
+      MYSQL_USER: ssm
+      MYSQL_PASSWORD: ssm
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -ussm -pssm --silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # http://localhost:8081
+  phpmyadmin:
+    image: phpmyadmin:5
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Rehearsal of a shared-hosting upload: the built release, in a subfolder.
+  # Start with: docker compose --profile release up -d release
+  # Then open:  http://localhost:8090/my-site/
+  release:
+    profiles: [release]
+    build:
+      context: docker/php
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+    ports:
+      - "8090:80"
+    volumes:
+      - ./release/site:/var/www/html/my-site
+    environment:
+      SSM_DEV_DB_HOST: db
+      SSM_DEV_DB_NAME: ssm
+      SSM_DEV_DB_USER: ssm
+      SSM_DEV_DB_PASS: ssm
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

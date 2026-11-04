@@ -1,0 +1,7 @@
+Options -Indexes
+DirectoryIndex index.html
+
+# Never serve dotfiles or the internal PHP sources.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

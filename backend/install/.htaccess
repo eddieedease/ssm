@@ -1,0 +1,4 @@
+DirectoryIndex index.php
+<FilesMatch "\.sql$">
+  Require all denied
+</FilesMatch>

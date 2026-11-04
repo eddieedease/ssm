@@ -1,0 +1,9 @@
+node_modules/
+frontend/dist/
+frontend/.angular/
+release/
+backend/config/config.php
+backend/uploads/*
+!backend/uploads/.htaccess
+.env
+.dev-credentials
